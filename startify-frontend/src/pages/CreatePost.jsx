@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { API_URL } from "../config";   // ✅ added
 import "../components/common.css";
 
 export default function CreatePost() {
@@ -15,6 +16,7 @@ export default function CreatePost() {
     setLoading(true);
 
     const token = localStorage.getItem("token");
+
     if (!token) {
       setError("You must be logged in to create a post.");
       setLoading(false);
@@ -22,7 +24,7 @@ export default function CreatePost() {
     }
 
     try {
-      const res = await fetch("http://localhost:5050/api/posts", {
+      const res = await fetch(`${API_URL}/api/posts`, {   // ✅ fixed
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -36,11 +38,13 @@ export default function CreatePost() {
       });
 
       const data = await res.json();
+
       if (!res.ok) throw new Error(data.msg || "Failed to create post");
 
       navigate("/dashboard");
+
     } catch (err) {
-      setError(err.message);
+      setError(err.message || "Something went wrong");
     } finally {
       setLoading(false);
     }

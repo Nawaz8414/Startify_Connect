@@ -1,15 +1,14 @@
 import { useEffect, useState } from "react";
 import DashboardLayout from "../components/DashboardLayout";
 import FeedCard from "../components/FeedCard";
+import { API_URL } from "../config";   // ✅ added
 import "../components/common.css";
 
 export default function Dashboard() {
 
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
-
-  const [feedType, setFeedType] = useState("all"); // all | global | institute
-
+  const [feedType, setFeedType] = useState("all");
 
   const fetchPosts = async () => {
 
@@ -22,31 +21,33 @@ export default function Dashboard() {
 
     try {
 
-      const res = await fetch(
-        `http://localhost:5050/api/posts/${feedType === "all" ? "" : feedType}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      const url =
+        feedType === "all"
+          ? `${API_URL}/api/posts`
+          : `${API_URL}/api/posts/${feedType}`;
+
+      const res = await fetch(url, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
       const data = await res.json();
 
+      if (!res.ok) throw new Error(data.msg || "Failed to fetch");
+
       setPosts(data);
-      setLoading(false);
 
     } catch (err) {
-
       console.error("Fetch posts error:", err);
+    } finally {
       setLoading(false);
-
     }
 
   };
 
-
   useEffect(() => {
+    setLoading(true);   // ✅ reset loading
     fetchPosts();
   }, [feedType]);
 
@@ -59,7 +60,7 @@ export default function Dashboard() {
     try {
 
       const res = await fetch(
-        `http://localhost:5050/api/posts/${postId}/like`,
+        `${API_URL}/api/posts/${postId}/like`,   // ✅ fixed
         {
           method: "PUT",
           headers: {
@@ -97,7 +98,7 @@ export default function Dashboard() {
     try {
 
       const res = await fetch(
-        `http://localhost:5050/api/posts/${postId}`,
+        `${API_URL}/api/posts/${postId}`,   // ✅ fixed
         {
           method: "DELETE",
           headers: {
@@ -146,7 +147,6 @@ export default function Dashboard() {
 
       </div>
 
-
       <div className="dashboard-top">
 
         <input
@@ -163,26 +163,19 @@ export default function Dashboard() {
 
       </div>
 
-
       {loading ? (
         <p>Loading feed...</p>
       ) : (
-
         <div className="feed-list">
-
           {posts.map(post => (
-
             <FeedCard
               key={post._id}
               post={post}
               onLike={handleLike}
               onDelete={handleDelete}
             />
-
           ))}
-
         </div>
-
       )}
 
     </DashboardLayout>

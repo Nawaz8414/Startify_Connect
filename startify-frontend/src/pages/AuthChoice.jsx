@@ -5,6 +5,10 @@ import "../components/common.css";
 export default function AuthChoice() {
   const navigate = useNavigate();
 
+  const goTo = (path, role) => {
+    navigate(path, { state: { role } });
+  };
+
   return (
     <div className="page-center">
       <div className="choice-card big">
@@ -20,24 +24,20 @@ export default function AuthChoice() {
           Login if you already have an account, or create a new one to get started
         </p>
 
-        {/* LOGIN SECTION */}
+        {/* LOGIN */}
         <div className="choice-section">
           <h3 className="choice-heading">Login</h3>
 
           <button
             className="choice-btn primary"
-            onClick={() =>
-              navigate("/login", { state: { role: "institute" } })
-            }
+            onClick={() => goTo("/login", "institute")}
           >
             🏛️ Institute Login
           </button>
 
           <button
             className="choice-btn outline"
-            onClick={() =>
-              navigate("/login", { state: { role: "founder" } })
-            }
+            onClick={() => goTo("/login", "founder")}
           >
             🌍 Global Login
           </button>
@@ -47,24 +47,20 @@ export default function AuthChoice() {
           <span>or</span>
         </div>
 
-        {/* SIGNUP SECTION */}
+        {/* SIGNUP */}
         <div className="choice-section">
           <h3 className="choice-heading">New here?</h3>
 
           <button
             className="choice-btn primary"
-            onClick={() =>
-              navigate("/signup", { state: { role: "founder" } })
-            }
+            onClick={() => goTo("/signup", "founder")}
           >
             🚀 Create New Account
           </button>
 
           <button
             className="choice-btn outline"
-            onClick={() =>
-              navigate("/signup", { state: { role: "institute" } })
-            }
+            onClick={() => goTo("/signup", "institute")}
           >
             🏫 Institute Signup
           </button>

@@ -5,11 +5,13 @@ import CTA from "../components/CTA";
 
 export default function Landing() {
   return (
-    <>
+    <div>
       <Navbar />
-      <Hero />
-      <Features />
-      <CTA />
-    </>
+      <main>
+        <Hero />
+        <Features />
+        <CTA />
+      </main>
+    </div>
   );
 }

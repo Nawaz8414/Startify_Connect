@@ -1,24 +1,24 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import BackButton from "../components/BackButton";
+import { API_URL } from "../config";   // ✅ added
 import "../components/common.css";
 
 export default function Login() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const role = location.state?.role || "founder"; // 👈 get role from AuthChoice
+  const role = location.state?.role || "founder";
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false); // ✅ added
 
   // 🔒 Redirect if already logged in
   useEffect(() => {
     const token = localStorage.getItem("token");
-    if (token) {
-      navigate("/dashboard");
-    }
+    if (token) navigate("/dashboard");
   }, [navigate]);
 
   const handleLogin = async () => {
@@ -31,14 +31,15 @@ export default function Login() {
     }
 
     try {
-      const res = await fetch("http://localhost:5050/api/auth/login", {
+      setLoading(true);
+
+      const res = await fetch(`${API_URL}/api/auth/login`, {  // ✅ fixed
         method: "POST",
         headers: { "Content-Type": "application/json" },
-
         body: JSON.stringify({
           email,
           password,
-          role   // 👈 send role
+          role
         }),
       });
 
@@ -52,7 +53,9 @@ export default function Login() {
       navigate("/dashboard");
 
     } catch (err) {
-      setError(err.message);
+      setError(err.message || "Something went wrong");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -83,8 +86,12 @@ export default function Login() {
           onChange={e => setPassword(e.target.value)}
         />
 
-        <button className="btn-primary full" onClick={handleLogin}>
-          Log In
+        <button
+          className="btn-primary full"
+          onClick={handleLogin}
+          disabled={loading}
+        >
+          {loading ? "Logging in..." : "Log In"}
         </button>
       </div>
     </div>

@@ -9,9 +9,21 @@ export default function Profile() {
   const navigate = useNavigate();
 
   useEffect(() => {
+
     const updateUser = () => {
       const u = localStorage.getItem("user");
-      if (u) setUser(JSON.parse(u));
+
+      if (!u) {
+        navigate("/login");   // ✅ redirect if not logged in
+        return;
+      }
+
+      try {
+        setUser(JSON.parse(u));   // ✅ safe parse
+      } catch {
+        localStorage.removeItem("user");
+        navigate("/login");
+      }
     };
 
     updateUser();
@@ -21,9 +33,14 @@ export default function Profile() {
     return () => {
       window.removeEventListener("storage", updateUser);
     };
-  }, []);
+
+  }, [navigate]);
+
+
 
   if (!user) return <p>Loading...</p>;
+
+
 
   return (
     <DashboardLayout>

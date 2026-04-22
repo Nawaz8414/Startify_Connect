@@ -3,8 +3,7 @@ import { io } from "socket.io-client";
 import "../components/common.css";
 import DashboardLayout from "../components/DashboardLayout";
 import { useParams } from "react-router-dom";
-
-const socket = io("http://localhost:5050");
+import { API_URL } from "../config";   // ✅ added
 
 export default function Messages() {
 
@@ -17,23 +16,30 @@ export default function Messages() {
   const [messages, setMessages] = useState([]);
   const [text, setText] = useState("");
 
+  const socketRef = useRef(null);   // ✅ FIXED
   const bottomRef = useRef();
 
   if (!user || !token) {
     return <p style={{ padding: 20 }}>Please login to view messages.</p>;
   }
 
-  // Join socket room
+  // ✅ CONNECT SOCKET
   useEffect(() => {
-    socket.emit("join", user.id);
+    socketRef.current = io(API_URL);   // ✅ dynamic
+
+    socketRef.current.emit("join", user.id);
+
+    return () => {
+      socketRef.current.disconnect();
+    };
   }, [user.id]);
 
 
 
-  // Fetch all users
+  // ✅ FETCH USERS
   useEffect(() => {
 
-    fetch("http://localhost:5050/api/users", {
+    fetch(`${API_URL}/api/users`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then(res => res.json())
@@ -41,7 +47,6 @@ export default function Messages() {
 
         setUsers(data);
 
-        // AUTO SELECT USER FROM URL
         if (userId) {
           const found = data.find(u => u._id === userId);
           if (found) setActiveUser(found);
@@ -54,12 +59,12 @@ export default function Messages() {
 
 
 
-  // Load messages when active user changes
+  // ✅ LOAD MESSAGES
   useEffect(() => {
 
     if (!activeUser) return;
 
-    fetch(`http://localhost:5050/api/messages/${activeUser._id}`, {
+    fetch(`${API_URL}/api/messages/${activeUser._id}`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then(res => res.json())
@@ -69,10 +74,12 @@ export default function Messages() {
 
 
 
-  // Receive socket messages
+  // ✅ RECEIVE SOCKET
   useEffect(() => {
 
-    socket.on("receiveMessage", msg => {
+    if (!socketRef.current) return;
+
+    socketRef.current.on("receiveMessage", msg => {
 
       if (
         activeUser &&
@@ -83,19 +90,20 @@ export default function Messages() {
 
     });
 
-    return () => socket.off("receiveMessage");
+    return () => socketRef.current?.off("receiveMessage");
 
   }, [activeUser, user.id]);
 
 
 
-  // Auto scroll
+  // ✅ AUTO SCROLL
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
 
 
+  // ✅ SEND MESSAGE
   const sendMessage = async () => {
 
     if (!text || !activeUser) return;
@@ -107,28 +115,23 @@ export default function Messages() {
       text,
     };
 
-    socket.emit("sendMessage", msgData);
+    socketRef.current.emit("sendMessage", msgData);
 
-    await fetch("http://localhost:5050/api/messages", {
-
+    await fetch(`${API_URL}/api/messages`, {
       method: "POST",
-
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,
       },
-
       body: JSON.stringify({
         to: activeUser._id,
         toName: activeUser.name,
         text,
       }),
-
     });
 
     setMessages(prev => [...prev, msgData]);
     setText("");
-
   };
 
 
@@ -138,7 +141,7 @@ export default function Messages() {
 
       <div className="chat-layout">
 
-        {/* Users list */}
+        {/* Users */}
         <div className="chat-users">
           <h3>Chats</h3>
 
@@ -153,12 +156,11 @@ export default function Messages() {
               👤 {u.name}
             </div>
           ))}
-
         </div>
 
 
 
-        {/* Chat box */}
+        {/* Chat Box */}
         <div className="chat-box">
 
           {!activeUser ? (

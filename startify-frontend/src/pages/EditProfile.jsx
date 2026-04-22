@@ -1,23 +1,33 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import DashboardLayout from "../components/DashboardLayout";
+import { API_URL } from "../config";   // ✅ added
 import "../components/common.css";
 
 export default function EditProfile() {
 
-  const user = JSON.parse(localStorage.getItem("user"));
+  const storedUser = localStorage.getItem("user");
+  const user = storedUser ? JSON.parse(storedUser) : null;   // ✅ safe
+
   const navigate = useNavigate();
 
-  const [name, setName] = useState(user.name);
-  const [email, setEmail] = useState(user.email);
+  const [name, setName] = useState(user?.name || "");
+  const [email, setEmail] = useState(user?.email || "");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);   // ✅ added
 
   const token = localStorage.getItem("token");
 
   const handleUpdate = async () => {
 
+    if (!token) {
+      alert("You are not logged in");
+      return;
+    }
+
     try {
-      // ✅ Only send password if user entered it
+      setLoading(true);
+
       const bodyData = {
         name,
         email
@@ -27,7 +37,7 @@ export default function EditProfile() {
         bodyData.password = password;
       }
 
-      const res = await fetch("http://localhost:5050/api/users/update", {
+      const res = await fetch(`${API_URL}/api/users/update`, {  // ✅ fixed
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -42,7 +52,6 @@ export default function EditProfile() {
         throw new Error(data.msg || "Update failed");
       }
 
-      // ✅ Update localStorage
       localStorage.setItem("user", JSON.stringify(data.user));
 
       alert("Profile updated successfully");
@@ -50,7 +59,9 @@ export default function EditProfile() {
       navigate("/profile");
 
     } catch (err) {
-      alert(err.message);
+      alert(err.message || "Something went wrong");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -88,8 +99,9 @@ export default function EditProfile() {
           <button
             className="btn-primary full"
             onClick={handleUpdate}
+            disabled={loading}
           >
-            Save Changes
+            {loading ? "Saving..." : "Save Changes"}   {/* ✅ UX */}
           </button>
 
         </div>

@@ -1,38 +1,40 @@
 import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import BackButton from "../components/BackButton";
+import { API_URL } from "../config";   // ✅ added
 import "../components/common.css";
 
 export default function Signup() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const role = location.state?.role || "founder"; // 👈 get role from AuthChoice
+  const role = location.state?.role || "founder";
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false); // ✅ added
 
   const handleSignup = async () => {
     setError("");
 
-    // frontend validation
     if (role === "institute" && !email.endsWith("@bvrit.ac.in")) {
       setError("Institute accounts must use @bvrit.ac.in email");
       return;
     }
 
     try {
-      const res = await fetch("http://localhost:5050/api/auth/signup", {
+      setLoading(true);
+
+      const res = await fetch(`${API_URL}/api/auth/signup`, { // ✅ fixed URL
         method: "POST",
         headers: { "Content-Type": "application/json" },
-
         body: JSON.stringify({
           name,
           email,
           password,
-          role   // 👈 send role to backend
+          role
         }),
       });
 
@@ -46,7 +48,9 @@ export default function Signup() {
       navigate("/dashboard");
 
     } catch (err) {
-      setError(err.message);
+      setError(err.message || "Something went wrong");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -57,7 +61,6 @@ export default function Signup() {
 
         <h2>Create Account</h2>
 
-        {/* show selected role */}
         <p style={{ color: "#64748b", marginBottom: "10px" }}>
           Signing up as <b>{role}</b>
         </p>
@@ -85,8 +88,12 @@ export default function Signup() {
           onChange={e => setPassword(e.target.value)}
         />
 
-        <button className="btn-primary full" onClick={handleSignup}>
-          Sign Up
+        <button
+          className="btn-primary full"
+          onClick={handleSignup}
+          disabled={loading}
+        >
+          {loading ? "Creating Account..." : "Sign Up"} {/* ✅ better UX */}
         </button>
       </div>
     </div>
