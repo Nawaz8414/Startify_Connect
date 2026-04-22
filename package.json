@@ -1,0 +1,12 @@
+{
+  "name": "startify-connect",
+  "private": true,
+  "scripts": {
+    "frontend": "npm run dev --prefix startify-frontend",
+    "backend": "npm run dev --prefix startify-backend",
+    "dev": "concurrently \"npm run backend\" \"npm run frontend\""
+  },
+  "devDependencies": {
+    "concurrently": "^9.0.0"
+  }
+}
